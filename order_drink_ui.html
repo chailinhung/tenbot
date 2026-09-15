@@ -326,8 +326,8 @@
       await fetchMenuAndHistory();
     };
 
-    // 🔔 3. 取得菜單與歷史紀錄
-    async function fetchMenuAndHistory() {
+    // 🔔 3. 取得菜單與歷史紀錄（含自動重試，避免 GAS 冷啟動時誤報「無法載入」）
+    async function fetchMenuAndHistory(retryCount = 0) {
       try {
         const response = await fetch(`${GAS_WEB_APP_URL}?action=get_menu_and_init&shop=${encodeURIComponent(shopName)}&gid=${groupId}&sid=${sessionId}&type=DRINK`);
         if (!response.ok) throw new Error('網路回應不成功');
@@ -362,10 +362,17 @@
         // 渲染歷史紀錄
         renderHistoryTable(result.history || []);
       } catch (error) {
+        // 🔧 [重試修正] 最多重試 2 次（各等 1.5 秒），應對 GAS 冷啟動或暫時網路抖動
+        if (retryCount < 2) {
+          document.getElementById('menu-list').innerHTML = `<div style="text-align:center; padding:10px; color:#888;">讀取中，請稍候...（第 ${retryCount + 1} 次重試）</div>`;
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          return fetchMenuAndHistory(retryCount + 1);
+        }
         console.error('初始化失敗:', error);
         document.getElementById('menu-list').innerHTML = '<div style="text-align:center; padding:10px; color:red;">無法載入菜單，請重新開啟頁面</div>';
       }
     }
+
 
     function renderMenu() {
       const list = document.getElementById('menu-list');
