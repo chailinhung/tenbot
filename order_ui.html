@@ -380,8 +380,7 @@
               globalMenu.forEach((_, i) => document.getElementById('qty-'+i).innerText='0'); 
               updateTotal();
 
-              // ⚡ 2. 背景同步最新正式明細
-              loadHistory();
+              // ⚡ 樂觀更新已完整呈現明細，不需再立即發送 loadHistory() 造成二次併發搶資源
             } else {
               throw new Error(resData.message || '點餐失敗');
             }
