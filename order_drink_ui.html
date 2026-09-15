@@ -468,8 +468,7 @@
               globalHistory.sort((a, b) => a.user.localeCompare(b.user) || a.meal.localeCompare(b.meal));
               renderHistoryTable(globalHistory);
 
-              // ⚡ 2. 背景同步正式明細
-              loadHistory();
+              // ⚡ 樂觀更新已完整呈現明細，不需再立即發送 loadHistory() 造成二次併發搶資源
             } else {
               throw new Error(resData.message || '點餐失敗');
             }
