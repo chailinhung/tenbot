@@ -24,8 +24,8 @@
         const GITHUB_PAGES_BASE = 'https://chailinhung.github.io/tenbot';
 
         async function init() {
-            // 🎯 超時設為 1.5 秒，確保 LIFF 無論如何不會卡死轉圈
-            const timeoutPromise = new Promise(resolve => setTimeout(() => resolve({ userName: "" }), 1500));
+            // 🎯 超時設為 8 秒，確保 LIFF 無論如何不會卡死轉圈
+            const timeoutPromise = new Promise(resolve => setTimeout(() => resolve({ userName: "" }), 8000));
 
             const liffPromise = (async () => {
                 try {
@@ -53,7 +53,7 @@
                 }
             })();
 
-            // 競賽：看是 LIFF 先跑完還是 1.5 秒先到
+            // 競賽：看是 LIFF 先跑完還是 8 秒先到
             const result = await Promise.race([liffPromise, timeoutPromise]);
 
             if (result && result.waitLogin) return; // 如果正在跳轉登入，則不執行後續
