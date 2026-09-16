@@ -24,8 +24,17 @@
         const GITHUB_PAGES_BASE = 'https://chailinhung.github.io/tenbot';
 
         async function init() {
-            // 🎯 超時設為 8 秒，確保 LIFF 無論如何不會卡死轉圈
-            const timeoutPromise = new Promise(resolve => setTimeout(() => resolve({ userName: "" }), 8000));
+            // 🛡️【參數保護第 1 步】：一進網頁立刻備份原始 URL 參數至 sessionStorage
+            const currentParams = new URLSearchParams(window.location.search);
+            ['shop', 'gid', 'sid', 'type'].forEach(key => {
+                const val = currentParams.get(key);
+                if (val) {
+                    sessionStorage.setItem('ORDER_' + key, val);
+                }
+            });
+
+            // 🎯 超時設為 2 秒，確保 LIFF 不會卡死轉圈
+            const timeoutPromise = new Promise(resolve => setTimeout(() => resolve({ userName: "" }), 2000));
 
             const liffPromise = (async () => {
                 try {
@@ -41,7 +50,7 @@
                     if (idToken && idToken.name) {
                         userName = idToken.name;
                     } else {
-                        // 第二層：快讀 profile（若 1.5 秒未完成將由 timeoutPromise 自動降級）
+                        // 第二層：快讀 profile（若 2 秒未完成將由 timeoutPromise 自動降級）
                         const profile = await liff.getProfile();
                         userName = profile.displayName;
                     }
@@ -53,13 +62,24 @@
                 }
             })();
 
-            // 競賽：看是 LIFF 先跑完還是 8 秒先到
+            // 競賽：看是 LIFF 先跑完還是超時先到
             const result = await Promise.race([liffPromise, timeoutPromise]);
 
             if (result && result.waitLogin) return; // 如果正在跳轉登入，則不執行後續
 
             const urlParams = new URLSearchParams(window.location.search);
-            const finalName = result.userName || "";
+
+            // 🛡️【參數保護第 2 步】：若網址參數遺失（如登入後或被轉址），自動從 sessionStorage 還原
+            ['shop', 'gid', 'sid', 'type'].forEach(key => {
+                if (!urlParams.get(key)) {
+                    const savedVal = sessionStorage.getItem('ORDER_' + key);
+                    if (savedVal) {
+                        urlParams.set(key, savedVal);
+                    }
+                }
+            });
+
+            const finalName = (result && result.userName) ? result.userName : "";
             if (finalName) {
                 urlParams.set('uName', finalName);
             }
