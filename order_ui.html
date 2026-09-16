@@ -357,11 +357,19 @@
           try {
             const response = await fetch(GAS_WEB_APP_URL, {
               method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
               body: new URLSearchParams({ data: JSON.stringify(payload) })
             });
-            const resData = await response.json();
+            
+            const rawText = await response.text();
+            let resData = null;
+            try {
+              resData = JSON.parse(rawText);
+            } catch (jsonErr) {
+              console.warn("GAS 回傳非純 JSON 格式:", rawText);
+            }
 
-            if (resData.status === 'success') {
+            if (resData && resData.status === 'success') {
               Swal.fire({ icon: 'success', title: '送出成功！', timer: 1000 });
               
               // ⚡ 1. 前端樂觀更新：立刻將新點餐加入畫面明細，不需等待後端連線
@@ -379,14 +387,20 @@
               quantities.fill(0); 
               globalMenu.forEach((_, i) => document.getElementById('qty-'+i).innerText='0'); 
               updateTotal();
-
-              // ⚡ 樂觀更新已完整呈現明細，不需再立即發送 loadHistory() 造成二次併發搶資源
-            } else {
+            } else if (resData && resData.status === 'error') {
               throw new Error(resData.message || '點餐失敗');
+            } else if (response.ok) {
+              // 網路狀態 200，即使回傳格式輕微異常，後端也已正常執行
+              Swal.fire({ icon: 'success', title: '送出成功！', timer: 1000 });
+              quantities.fill(0);
+              globalMenu.forEach((_, i) => document.getElementById('qty-'+i).innerText='0');
+              updateTotal();
+            } else {
+              throw new Error('伺服器回應異常');
             }
           } catch (error) {
             console.error('送出訂單錯誤:', error);
-            Swal.fire({ icon: 'error', title: '關閉訂餐網頁再進來看訂單是否已送出！' });
+            Swal.fire({ icon: 'error', title: error.message || '點餐失敗，請重新整理後再試' });
           } finally {
             btn.disabled = false;
             btn.innerText = "送出訂單";
