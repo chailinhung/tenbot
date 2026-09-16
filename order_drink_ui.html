@@ -481,7 +481,7 @@
               Swal.fire({ icon: 'success', title: '訂單已送出！', timer: 800 });
               closeModal();
             } else {
-              throw new Error('伺服器回應異常');
+              throw new Error('伺服器回應異常，但可能有訂餐成功，離開再進來查詢確認！');
             }
           } catch (error) {
             console.error('送出訂單錯誤:', error);
