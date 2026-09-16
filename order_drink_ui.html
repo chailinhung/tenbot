@@ -450,19 +450,11 @@
           try {
             const response = await fetch(GAS_WEB_APP_URL, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
               body: new URLSearchParams({ data: JSON.stringify(payload) })
             });
-            
-            const rawText = await response.text();
-            let resData = null;
-            try {
-              resData = JSON.parse(rawText);
-            } catch (jsonErr) {
-              console.warn("GAS 回傳非純 JSON 格式:", rawText);
-            }
+            const resData = await response.json();
 
-            if (resData && resData.status === 'success') {
+            if (resData.status === 'success') {
               Swal.fire({ icon: 'success', title: '訂單已送出！', timer: 800 });
               closeModal(); 
               
@@ -475,17 +467,14 @@
               }
               globalHistory.sort((a, b) => a.user.localeCompare(b.user) || a.meal.localeCompare(b.meal));
               renderHistoryTable(globalHistory);
-            } else if (resData && resData.status === 'error') {
-              throw new Error(resData.message || '點餐失敗');
-            } else if (response.ok) {
-              Swal.fire({ icon: 'success', title: '訂單已送出！', timer: 800 });
-              closeModal();
+
+              // ⚡ 樂觀更新已完整呈現明細，不需再立即發送 loadHistory() 造成二次併發搶資源
             } else {
-              throw new Error('伺服器回應異常，但可能有訂餐成功，離開再進來查詢確認！');
+              throw new Error(resData.message || '點餐失敗');
             }
           } catch (error) {
             console.error('送出訂單錯誤:', error);
-            Swal.fire({ icon: 'error', title: error.message || '點餐失敗，請重新整理後再試' });
+            Swal.fire({ icon: 'error', title: '關閉訂餐網頁再進來看訂單是否已送出！' });
           } finally {
             btn.disabled = false;
             btn.innerText = originalText;
