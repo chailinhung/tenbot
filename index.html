@@ -33,8 +33,8 @@
                 }
             });
 
-            // 🎯 超時設為 2 秒，確保 LIFF 不會卡死轉圈
-            const timeoutPromise = new Promise(resolve => setTimeout(() => resolve({ userName: "" }), 2000));
+            // 🎯 超時設為 7 秒，確保 LIFF 不會卡死轉圈
+            const timeoutPromise = new Promise(resolve => setTimeout(() => resolve({ userName: "" }), 7000));
 
             const liffPromise = (async () => {
                 try {
